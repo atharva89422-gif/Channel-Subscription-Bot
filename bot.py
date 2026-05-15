@@ -104,20 +104,53 @@ def get_plans(message):
     else:
         bot.send_message(ADMIN_ID, "❌ Error: Message was not forwarded. Use /add to try again.")
 
+
 def finalize_channel(message, ch_id, ch_name):
     try:
+        if not message.text:
+            raise ValueError("No input received")
+
         raw_plans = message.text.split(',')
         plans_dict = {}
-        for p in raw_plans:
-            t, pr = p.strip().split(':')
-            plans_dict[t] = pr
-        
-        channels_col.update_one({"channel_id": ch_id}, {"$set": {"name": ch_name, "plans": plans_dict, "admin_id": ADMIN_ID}}, upsert=True)
-        bot_username = bot.get_me().username
-        bot.send_message(ADMIN_ID, f"✅ Setup Successful!\n\nInvite Link for users:\n`https://t.me/{bot_username}?start={ch_id}`", parse_mode="Markdown")
-    except:
-        bot.send_message(ADMIN_ID, "❌ Invalid format. Please use `Min:Price, Min:Price`. Use /add to retry.")
 
+        for p in raw_plans:
+            p = p.strip()
+
+            if ':' not in p:
+                raise ValueError("Missing ':' in plan")
+
+            t, pr = p.split(':')
+
+            t = t.strip()
+            pr = pr.strip()
+
+            if not t.isdigit() or not pr.isdigit():
+                raise ValueError("Minutes and Price must be numbers")
+
+            plans_dict[int(t)] = int(pr)
+
+        channels_col.update_one(
+            {"channel_id": ch_id},
+            {"$set": {
+                "name": ch_name,
+                "plans": plans_dict,
+                "admin_id": ADMIN_ID
+            }},
+            upsert=True
+        )
+
+        bot_username = bot.get_me().username
+        bot.send_message(
+            ADMIN_ID,
+            f"✅ Setup Successful!\n\nInvite Link:\n`https://t.me/{bot_username}?start={ch_id}`",
+            parse_mode="Markdown"
+        )
+
+    except Exception as e:
+        bot.send_message(
+            ADMIN_ID,
+            f"❌ Error: {str(e)}\n\nUse format: 1440:99, 43200:199"
+        )
 # --- USER: PAYMENT FLOW ---
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('select_'))
