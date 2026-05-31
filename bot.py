@@ -161,21 +161,33 @@ def approve_now(call):
     u_id, ch_id, mins = int(u_id), int(ch_id), int(mins)
     
     try:
-        expiry_datetime = datetime.now() + timedelta(minutes=mins)
-        expiry_ts = int(expiry_datetime.timestamp())
 
-        # Link expires when sub ends
-        link = bot.create_chat_invite_link(ch_id, member_limit=1, expire_date=expiry_ts)
-        
-        users_col.update_one({"user_id": u_id, "channel_id": ch_id}, {"$set": {"expiry": expiry_datetime.timestamp()}}, upsert=True)
-        
-        bot.send_message(u_id, f"🥳 *Payment Approved!*\n\nSubscription: {mins} Minutes\n\nJoin Link: {link.invite_link}\n\n⚠️ Note: This link and your access will expire in {mins} minutes.", parse_mode="Markdown")
-        bot.edit_message_text(f"✅ Approved user {u_id} for {mins} mins.", call.message.chat.id, call.message.message_id)
-        
+        expiry_datetime = datetime.now() + timedelta(minutes=mins)
+
+        users_col.update_one(
+            {"user_id": u_id},
+            {
+                "$set": {
+                    "premium": True,
+                    "expiry": expiry_datetime.timestamp()
+                }
+            },
+            upsert=True
+        )
+
+        bot.send_message(
+            u_id,
+            f"🥳 Premium Activated!\n\nSubscription: {mins} Minutes\n\nYour premium access is now active."
+        )
+
+        bot.edit_message_text(
+            f"✅ Approved user {u_id} for {mins} mins.",
+            call.message.chat.id,
+            call.message.message_id
+        )
+
     except Exception as e:
         bot.send_message(ADMIN_ID, f"❌ Error: {e}")
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith('manage_'))
 def manage_ch(call):
     ch_id = int(call.data.split('_')[1])
     ch_data = channels_col.find_one({"channel_id": ch_id})
