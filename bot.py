@@ -60,8 +60,11 @@ def start_handler(message):
 
     # Admin Panel Greeting
     if user_id == ADMIN_ID:
-        bot.send_message(message.chat.id, "✅ Admin Panel Active!\n\n/add - Add/Edit Channel & Prices\n/channels - Manage Existing Channels")
-    else:
+    bot.send_message(
+        message.chat.id,
+        "✅ Admin Panel Active!\n\n/add - Add/Edit Channel & Prices\n/channels - Manage Existing Channels"
+    )
+else:
     markup = InlineKeyboardMarkup()
     markup.add(
         InlineKeyboardButton(
@@ -75,6 +78,7 @@ def start_handler(message):
         "Welcome!",
         reply_markup=markup
     )
+
 @bot.message_handler(commands=['channels'], func=lambda m: m.from_user.id == ADMIN_ID)
 def list_channels(message):
     markup = InlineKeyboardMarkup()
