@@ -211,4 +211,4 @@ if __name__ == '__main__':
     scheduler.start()
     bot.remove_webhook()
     print("Bot is running...")
-    bot.infinity_polling(timeout=20, long_polling_timeout
+    bot.infinity_polling(timeout=20, long_polling_timeout=20)
